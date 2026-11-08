@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chaos Garden: Dashboard
 
-## Getting Started
+The web dashboard for Chaos Garden, a fault-injection platform for frontend developers. Create a garden, point it at an API, add rules that make requests slow, fail, vanish or arrive broken, then send requests through the proxy and watch what happens.
 
-First, run the development server:
+Built with Next.js, TypeScript and Tailwind. It talks to two other services directly from the browser:
+
+- the [control API](https://github.com/georgi4334/backend) (gardens, targets, rules)
+- the [fault proxy](https://github.com/georgi4334/chaos-garden-proxy) (the "Try it" panel sends requests through it)
+
+## Run it
+
+Start the control API (port 3000) and the proxy (port 3100) first, then:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
+npm run dev        # http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable | Default | Meaning |
+|---|---|---|
+| `NEXT_PUBLIC_CONTROL_API_URL` | `http://localhost:3000` | control API base URL |
+| `NEXT_PUBLIC_PROXY_URL` | `http://localhost:3100` | fault proxy base URL |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The control API only accepts browser calls from origins listed in its `CORS_ORIGIN` (default `http://localhost:3001`, which matches this app's dev port).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How it works
 
-## Learn More
+- **No accounts.** Creating a garden returns an admin token once. It is stored in this browser's `localStorage`, so clearing site data loses access unless you copied the token. Anyone with access to the browser profile can use it.
+- **The bed.** In "Try it", each request becomes a stem. Color and the shape on top show what happened (passed, delayed, injected error, no response, broken body, error from the target). Height shows response time on a log scale. A request with no HTTP response at all is shown as "No response", which means a dropped connection or an unreachable proxy.
+- **Rules** are listed in creation order. Toggle them on and off without deleting them.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev     # dev server on port 3001
+npm run build   # production build
+npm start       # serve the build on port 3001
+npm run lint
+```
