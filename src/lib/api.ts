@@ -67,7 +67,15 @@ async function request<T>(
   } catch {
     throw new ApiError(
       0,
-      `Can't reach the control API at ${CONTROL_API_URL}. Check that it is running and allows this site (CORS_ORIGIN).`,
+      `Can't reach the control API at ${CONTROL_API_URL}. On a free hosting plan it may be waking up, which takes about a minute: try again shortly. Otherwise, check that it is running and allows this site (CORS_ORIGIN).`,
+    );
+  }
+  // A platform's "starting up" page instead of the API's JSON.
+  const isJson = (res.headers.get("content-type") ?? "").includes("application/json");
+  if (res.status !== 204 && !isJson) {
+    throw new ApiError(
+      res.status,
+      "The control API sent an unexpected response. If it runs on a free hosting plan it may be waking up, which takes about a minute: try again shortly.",
     );
   }
 
