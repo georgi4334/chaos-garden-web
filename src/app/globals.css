@@ -8,11 +8,14 @@
   --line: #c3d1c9;
   --sap: #2e7d4f;
   --sap-deep: #1f5c39;
-  --latency: #b7791f;
+  /* Outcome colors: validated as one stacked palette (dataviz validate_palette.js, light,
+     on --glass) in this order: sap, latency, error, corrupt, drop, other. */
+  --latency: #c27c00;
   --error: #b83a3a;
   --drop: #6a4fb3;
-  --corrupt: #1f7a8c;
-  --target-error: #6b7a71;
+  --corrupt: #0083a3;
+  /* Failures not injected by Chaos Garden: an error from the target, or no response. */
+  --other: #c75b98;
 }
 
 @theme inline {
@@ -27,6 +30,7 @@
   --color-fault-error: var(--error);
   --color-drop: var(--drop);
   --color-corrupt: var(--corrupt);
+  --color-other: var(--other);
   --font-sans: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
 }

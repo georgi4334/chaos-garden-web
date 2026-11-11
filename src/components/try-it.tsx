@@ -32,7 +32,15 @@ async function sendOne(url: string, method: string, id: number): Promise<Request
   }
 }
 
-export function TryIt({ gardenId, targetName }: { gardenId: string; targetName: string }) {
+export function TryIt({
+  gardenId,
+  targetName,
+  onRunComplete,
+}: {
+  gardenId: string;
+  targetName: string;
+  onRunComplete?: () => void;
+}) {
   const [method, setMethod] = useState("GET");
   const [path, setPath] = useState("/");
   const [count, setCount] = useState(25);
@@ -76,7 +84,10 @@ export function TryIt({ gardenId, targetName }: { gardenId: string; targetName: 
       }
     };
     await Promise.all(Array.from({ length: Math.min(CONCURRENCY, count) }, worker));
-    if (runId.current === myRun) setRunning(false);
+    if (runId.current === myRun) {
+      setRunning(false);
+      onRunComplete?.();
+    }
   }
 
   const counts = results.reduce<Record<string, number>>((acc, r) => {
