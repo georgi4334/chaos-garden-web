@@ -1,15 +1,74 @@
-# Chaos Garden: Dashboard
+<div align="center">
 
-The web dashboard for Chaos Garden, a fault-injection platform for frontend developers. Create a garden, point it at an API, add rules that make requests slow, fail, vanish or arrive broken, then send requests through the proxy and watch what happens.
+<img src="docs/images/logo.svg" width="72" height="72" alt="">
 
-Built with Next.js, TypeScript and Tailwind. It talks to two other services directly from the browser:
+# Chaos Garden: dashboard
 
-- the [control API](https://github.com/georgi4334/backend) (gardens, targets, rules)
-- the [fault proxy](https://github.com/georgi4334/chaos-garden-proxy) (the "Try it" panel sends requests through it)
+**See how your app copes when the API misbehaves.** Create a garden, point it at an API, add rules that make requests slow, fail, vanish or come back broken, then send requests through the proxy and watch what happens.
+
+[![CI](https://github.com/georgi4334/chaos-garden-web/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/georgi4334/chaos-garden-web/actions/workflows/ci.yml)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-image-2496ED?logo=docker&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Hobby-000000?logo=vercel&logoColor=white)
+
+<img src="docs/images/home.png" alt="The Chaos Garden home page: 'Break your API on purpose', a sample run of requests drawn as stems, and a form to create a garden" width="900">
+
+</div>
+
+This is the web app of [Chaos Garden](https://github.com/georgi4334/Chaos-Garden). It runs in the browser and talks to two services directly:
+
+```mermaid
+flowchart LR
+    LS[("localStorage<br/>admin tokens")] <--> UI["Dashboard<br/>(in your browser)"]
+    UI -- "gardens, targets, rules,<br/>rate limit, logs, stats" --> API["Control API"]
+    UI -- "Try it requests" --> P["Fault proxy"]
+    API -. "logs and stats" .-> ING["Ingest service"]
+    P --> T["Your API"]
+```
+
+- the [control API](https://github.com/georgi4334/Chaos-Garden) for gardens, targets, rules and the request logs;
+- the [fault proxy](https://github.com/georgi4334/chaos-garden-proxy), which the "Try it" panel sends requests through.
+
+## A quick tour
+
+### Your garden
+
+<img src="docs/images/garden.png" alt="A garden called Checkout flow: its admin token, a rate limit of 15 requests per second with bursts of 30, a target orders-api with its proxy URL, and four rules: return 503 on 20% of POST /orders, wait 1200 ms on 25% of GET /orders/*, corrupt the body on 10% of GET /orders/:id, drop the connection on 5% of all requests" width="900">
+
+- **No accounts.** Creating a garden returns an admin token once. It is kept in this browser's `localStorage`, so clearing site data loses access unless you copied the token. Anyone with access to this browser profile can use it.
+- **Targets** are the APIs you test. Each gets a proxy URL; send your app's requests there instead of to the API.
+- **Rules** read as sentences and are listed in creation order. Turn them on and off without deleting them.
+- **Rate limit.** Each garden has a proxy rate limit (requests per second and burst) that its owner can change. Requests over it get a 429, which Try it points out and Activity lists as "Rate limited".
+
+### Try it
+
+<img src="docs/images/try-it.png" alt="Try it: 50 GET requests to /orders/1042, drawn as stems. 39 passed through, 7 delayed, 1 with no response and 3 with a broken body; the slowest took 2626 ms" width="720">
+
+Send 10, 25 or 50 requests through the proxy from the page. Each request becomes a stem: the color and the shape on top show what happened, and the height shows how long it took, on a log scale. A request with no HTTP response at all shows as "No response": a dropped connection, or a proxy that can't be reached.
+
+### Activity
+
+<img src="docs/images/activity.png" alt="Activity for orders-api over the last 15 minutes: 4,017 requests, 31% hit by a fault, 247 ms on average, the split by outcome, a stacked chart of outcomes per minute with one minute's tooltip open, and a table of the most recent requests" width="720">
+
+Every request that went through the proxy for the selected target, from any app, not only Try it: request count, share hit by a fault, average time, the split by outcome, outcomes per minute, and the most recent requests. Hover the chart or use the arrow keys on it; "Show as table" lists the same numbers. It refreshes every 15 seconds and right after a Try it run. It needs the ingest service; if that is unavailable, this section says so and the rest of the page keeps working.
+
+### Outcome colors
+
+![Passed](https://img.shields.io/badge/passed-2e7d4f?style=flat-square)
+![Delayed](https://img.shields.io/badge/delayed-c27c00?style=flat-square)
+![Error](https://img.shields.io/badge/error-b83a3a?style=flat-square)
+![Broken body](https://img.shields.io/badge/broken_body-0083a3?style=flat-square)
+![No response](https://img.shields.io/badge/no_response-6a4fb3?style=flat-square)
+![Other](https://img.shields.io/badge/other-c75b98?style=flat-square)
+
+The six outcome colors were checked as one palette, for telling them apart with common kinds of color blindness and for contrast against the page. Each outcome also has its own shape (a tick, a clock, a cross, a wave, a dash, an exclamation mark), so color is never the only cue. If you change a color, re-run the palette check named in the comment in `src/app/globals.css`.
 
 ## Run it
 
-Start the control API (port 3000) and the proxy (port 3100) first, then:
+Start the control API (port 3000) and the proxy (port 3100) first, as their READMEs describe, then:
 
 ```bash
 npm install
@@ -22,20 +81,13 @@ npm run dev        # http://localhost:3001
 | `NEXT_PUBLIC_CONTROL_API_URL` | `http://localhost:3000` | control API base URL |
 | `NEXT_PUBLIC_PROXY_URL` | `http://localhost:3100` | fault proxy base URL |
 
-The control API only accepts browser calls from origins listed in its `CORS_ORIGIN` (default `http://localhost:3001`, which matches this app's dev port).
+The control API only accepts browser calls from origins in its `CORS_ORIGIN` (default `http://localhost:3001`, this app's dev port).
 
-## How it works
-
-- **No accounts.** Creating a garden returns an admin token once. It is stored in this browser's `localStorage`, so clearing site data loses access unless you copied the token. Anyone with access to the browser profile can use it.
-- **The bed.** In "Try it", each request becomes a stem. Color and the shape on top show what happened (passed, delayed, injected error, no response, broken body, error from the target). Height shows response time on a log scale. A request with no HTTP response at all is shown as "No response", which means a dropped connection or an unreachable proxy.
-- **Rate limit.** Each garden shows its proxy rate limit (requests per second and burst) and the owner can change it. Requests over the limit get a 429, which Try it points out and Activity lists as "Rate limited".
-- **Rules** are listed in creation order. Toggle them on and off without deleting them.
-- **Activity** shows every request that went through the proxy for the selected target, from any app: request count, share hit by a fault, average time, the split by outcome, outcomes per minute (hover or use the arrow keys on the chart; "Show as table" lists the same numbers), and the most recent requests. It refreshes every 15 seconds, and right after a Try it run. It needs the control API's `/requests` and `/stats` endpoints and the ingest service; if those are unavailable, the section says so and the rest of the page keeps working.
-- **Outcome colors** are validated as one palette for colorblind separation and contrast (see the comment in `src/app/globals.css`). Change them only by re-running a palette check.
+To run everything, this app included, in containers instead, use `npm run stack:up` in the Chaos-Garden repo.
 
 ## Deploy on Vercel
 
-Import this repo in Vercel and set `NEXT_PUBLIC_CONTROL_API_URL` and `NEXT_PUBLIC_PROXY_URL` to the public URLs of the control API and the proxy. The full free setup (backend on Render, Postgres on Neon) is in [DEPLOY.md](https://github.com/georgi4334/Chaos-Garden/blob/main/DEPLOY.md) in the Chaos-Garden repo. On free hosting the APIs sleep when idle; the dashboard's error messages say when a server may be waking up.
+Import this repository in Vercel and set `NEXT_PUBLIC_CONTROL_API_URL` and `NEXT_PUBLIC_PROXY_URL` to the public URLs of the control API and the proxy. These are compiled into the page, so redeploy after changing them. The full free setup (backend on Render, Postgres on Neon) is in Chaos-Garden's [DEPLOY.md](https://github.com/georgi4334/Chaos-Garden/blob/main/DEPLOY.md). On free hosting the APIs sleep when idle; the dashboard's error messages say when a server may be waking up.
 
 ## Docker and CI
 
@@ -46,11 +98,11 @@ docker build -t chaos-garden-web \
 docker run -p 3001:3001 chaos-garden-web
 ```
 
-The API URLs are **build arguments**, because Next.js bakes `NEXT_PUBLIC_*` values into the browser bundle; they are the addresses the browser uses. The image uses Next.js standalone output (a small `server.js`), runs as `node`, and has a health check. To run the whole system in containers, see `infra/compose.stack.yml` in the Chaos-Garden repo.
+The API URLs are **build arguments**, because Next.js bakes `NEXT_PUBLIC_*` values into the browser bundle; they are the addresses the browser uses. The image uses Next.js standalone output (a small `server.js`), runs as `node` and has a health check.
 
-`.github/workflows/ci.yml` runs lint and build on every pull request and on `main`, then builds the image. On `main` it pushes it to `ghcr.io/<owner>/chaos-garden-web`, built for the local setup (APIs on localhost).
+On every pull request and on `main`, CI runs lint and build, then builds the image. On `main` it pushes `ghcr.io/georgi4334/chaos-garden-web`, built for the local setup (APIs on localhost).
 
-## Scripts
+## Scripts and layout
 
 ```bash
 npm run dev     # dev server on port 3001
@@ -58,3 +110,30 @@ npm run build   # production build
 npm start       # serve the build on port 3001
 npm run lint
 ```
+
+```
+src/
+├── app/
+│   ├── page.tsx                  home: create a garden, open a saved one
+│   ├── gardens/[gardenId]/       one garden
+│   └── globals.css               design tokens and the outcome palette
+├── components/
+│   ├── garden-view.tsx           the garden page: token, rate limit, targets
+│   ├── target-panel.tsx          proxy URL and rules for one target
+│   ├── rule-form.tsx
+│   ├── try-it.tsx, bed.tsx       Try it and its stems
+│   ├── glyph.tsx                 the shape for each outcome
+│   ├── activity.tsx              Activity: totals, chart, recent requests
+│   └── activity-chart.tsx
+└── lib/
+    ├── api.ts                    typed client for the control API
+    ├── saved-gardens.ts          admin tokens in localStorage
+    └── outcomes.ts               outcome names and colors, rules as sentences
+```
+
+## Roadmap
+
+- Tests: component tests for the rule form and the outcome mapping, and a Playwright run of create garden → add rule → Try it against the real stack.
+- A dark theme.
+- Live Activity over server-sent events instead of polling every 15 seconds.
+- Export a garden's rules as JSON and import them into another garden.
