@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Self-contained server for the Docker image (.next/standalone).
+  output: "standalone",
   turbopack: {
     rules: {
       "*.css": {
