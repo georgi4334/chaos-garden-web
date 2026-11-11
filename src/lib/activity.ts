@@ -24,6 +24,7 @@ export const CLASS_OF: Record<LoggedOutcome, ClassKey> = {
   drop: "dropped",
   target_error: "other",
   no_response: "other",
+  rate_limited: "other",
 };
 
 export const OUTCOME_LABEL: Record<LoggedOutcome, string> = {
@@ -34,6 +35,7 @@ export const OUTCOME_LABEL: Record<LoggedOutcome, string> = {
   drop: "Dropped",
   target_error: "Error from the target",
   no_response: "No response",
+  rate_limited: "Rate limited",
 };
 
 export function toClasses(c: Omit<OutcomeCounts, "avgDurationMs" | "total">): ClassCounts {
@@ -43,7 +45,7 @@ export function toClasses(c: Omit<OutcomeCounts, "avgDurationMs" | "total">): Cl
     error: c.error,
     broken: c.corrupt,
     dropped: c.drop,
-    other: c.targetError + c.noResponse,
+    other: c.targetError + c.noResponse + (c.rateLimited ?? 0),
   };
 }
 
