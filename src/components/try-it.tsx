@@ -94,6 +94,7 @@ export function TryIt({
     acc[r.outcome] = (acc[r.outcome] ?? 0) + 1;
     return acc;
   }, {});
+  const rateLimited = results.filter((r) => r.fault?.split(",").includes("rate_limited")).length;
   const slowest = results.reduce((max, r) => Math.max(max, r.ms ?? 0), 0);
   const detail = selected !== null ? results[selected] : null;
 
@@ -182,6 +183,12 @@ export function TryIt({
             <p className="text-sm text-ink-soft">
               Slowest response: {Math.round(slowest)} ms.
               {counts.drop ? " “No response” means the connection was dropped, or the proxy isn't reachable." : ""}
+            </p>
+          )}
+          {!running && rateLimited > 0 && (
+            <p className="text-sm">
+              {rateLimited} of {results.length} requests were refused by this garden&rsquo;s rate limit (429). They count
+              as other failures. Raise the limit under Rate limit at the top of the page, or send fewer requests.
             </p>
           )}
           {detail && (

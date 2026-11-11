@@ -17,7 +17,7 @@ export const OUTCOME_META: Record<Outcome, { label: string; color: string }> = {
   error: { label: "Injected error", color: "var(--error)" },
   drop: { label: "No response", color: "var(--drop)" },
   corrupt: { label: "Broken body", color: "var(--corrupt)" },
-  "target-error": { label: "Error from the target", color: "var(--other)" },
+  "target-error": { label: "Other failure", color: "var(--other)" },
   pending: { label: "Waiting", color: "var(--line)" },
 };
 

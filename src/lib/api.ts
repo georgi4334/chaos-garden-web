@@ -5,6 +5,9 @@ export type FaultType = "latency" | "error" | "drop" | "corrupt";
 export interface Garden {
   id: string;
   name: string;
+  /** Proxy rate limit: sustained requests per second, and burst size. */
+  rateLimitRps: number;
+  rateLimitBurst: number;
   createdAt: string;
 }
 
@@ -64,7 +67,15 @@ async function request<T>(
   } catch {
     throw new ApiError(
       0,
-      `Can't reach the control API at ${CONTROL_API_URL}. Check that it is running and allows this site (CORS_ORIGIN).`,
+      `Can't reach the control API at ${CONTROL_API_URL}. On a free hosting plan it may be waking up, which takes about a minute: try again shortly. Otherwise, check that it is running and allows this site (CORS_ORIGIN).`,
+    );
+  }
+  // A platform's "starting up" page instead of the API's JSON.
+  const isJson = (res.headers.get("content-type") ?? "").includes("application/json");
+  if (res.status !== 204 && !isJson) {
+    throw new ApiError(
+      res.status,
+      "The control API sent an unexpected response. If it runs on a free hosting plan it may be waking up, which takes about a minute: try again shortly.",
     );
   }
 
@@ -87,6 +98,11 @@ export const api = {
   createGarden: (name: string) =>
     request<Garden & { adminToken: string }>("/gardens", { method: "POST", body: { name } }),
   getGarden: (id: string, token: string) => request<Garden>(`/gardens/${id}`, { token }),
+  updateGarden: (
+    id: string,
+    token: string,
+    body: Partial<Pick<Garden, "name" | "rateLimitRps" | "rateLimitBurst">>,
+  ) => request<Garden>(`/gardens/${id}`, { method: "PATCH", token, body }),
   deleteGarden: (id: string, token: string) =>
     request<void>(`/gardens/${id}`, { method: "DELETE", token }),
 
@@ -125,7 +141,15 @@ export const api = {
 };
 
 /** Outcomes as stored by the ingest service. */
-export type LoggedOutcome = "ok" | "slow" | "error" | "drop" | "corrupt" | "target_error" | "no_response";
+export type LoggedOutcome =
+  | "ok"
+  | "slow"
+  | "error"
+  | "drop"
+  | "corrupt"
+  | "target_error"
+  | "no_response"
+  | "rate_limited";
 
 export interface RequestLog {
   id: string;
@@ -149,6 +173,8 @@ export interface OutcomeCounts {
   corrupt: number;
   targetError: number;
   noResponse: number;
+  /** Refused by the garden's rate limit. Missing from older ingest services. */
+  rateLimited?: number;
   avgDurationMs: number | null;
 }
 
