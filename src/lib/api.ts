@@ -123,3 +123,60 @@ export const api = {
       token,
     }),
 };
+
+/** Outcomes as stored by the ingest service. */
+export type LoggedOutcome = "ok" | "slow" | "error" | "drop" | "corrupt" | "target_error" | "no_response";
+
+export interface RequestLog {
+  id: string;
+  targetId: string;
+  targetName: string;
+  method: string;
+  path: string;
+  status: number | null;
+  outcome: LoggedOutcome;
+  durationMs: number;
+  faults: string[];
+  occurredAt: string;
+}
+
+export interface OutcomeCounts {
+  total: number;
+  ok: number;
+  slow: number;
+  error: number;
+  drop: number;
+  corrupt: number;
+  targetError: number;
+  noResponse: number;
+  avgDurationMs: number | null;
+}
+
+export interface Stats {
+  from: string;
+  to: string;
+  totals: OutcomeCounts;
+  buckets: Array<OutcomeCounts & { bucket: string }>;
+}
+
+export const logsApi = {
+  requests: (
+    gardenId: string,
+    token: string,
+    query: { targetId?: string; limit?: number; before?: string },
+  ) => {
+    const qs = new URLSearchParams();
+    if (query.targetId) qs.set("targetId", query.targetId);
+    if (query.limit) qs.set("limit", String(query.limit));
+    if (query.before) qs.set("before", query.before);
+    return request<{ items: RequestLog[]; nextBefore: string | null }>(
+      `/gardens/${gardenId}/requests?${qs}`,
+      { token },
+    );
+  },
+  stats: (gardenId: string, token: string, query: { targetId?: string; minutes: number }) => {
+    const qs = new URLSearchParams({ minutes: String(query.minutes) });
+    if (query.targetId) qs.set("targetId", query.targetId);
+    return request<Stats>(`/gardens/${gardenId}/stats?${qs}`, { token });
+  },
+};

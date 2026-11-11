@@ -8,6 +8,7 @@ import { dangerButton, errorText, monoClass, quietButton } from "@/lib/ui";
 import { CopyButton } from "./copy-button";
 import { Glyph } from "./glyph";
 import { RuleForm } from "./rule-form";
+import { Activity } from "./activity";
 import { TryIt } from "./try-it";
 
 /** Everything about one target. Mounted with key={target.id}, so state resets per target. */
@@ -24,6 +25,7 @@ export function TargetPanel({
 }) {
   const [rules, setRules] = useState<Rule[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activityKey, setActivityKey] = useState(0);
   const proxyUrl = proxyUrlFor(gardenId, target.name);
 
   useEffect(() => {
@@ -153,7 +155,13 @@ export function TargetPanel({
         />
       </section>
 
-      <TryIt gardenId={gardenId} targetName={target.name} />
+      <TryIt
+        gardenId={gardenId}
+        targetName={target.name}
+        // Events reach the ingest service within about a second; refresh after that.
+        onRunComplete={() => setTimeout(() => setActivityKey((k) => k + 1), 1500)}
+      />
+      <Activity gardenId={gardenId} token={token} targetId={target.id} refreshKey={activityKey} />
     </div>
   );
 }
