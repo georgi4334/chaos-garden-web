@@ -193,7 +193,8 @@ function Summary({ stats }: { stats: Stats }) {
         </ul>
         {classes.other > 0 && (
           <p className="mt-2 text-sm text-ink-soft">
-            Other failure means the target itself returned an error, or no response was sent.
+            Other failure means the target itself returned an error, no response was sent, or the garden&rsquo;s
+            rate limit refused the request.
           </p>
         )}
       </div>

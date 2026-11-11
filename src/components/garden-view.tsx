@@ -6,6 +6,7 @@ import { ApiError, api, type Garden, type Target } from "@/lib/api";
 import { forgetGarden } from "@/lib/saved-gardens";
 import { dangerButton, errorText, inputClass, monoClass, primaryButton, quietButton } from "@/lib/ui";
 import { CopyButton } from "./copy-button";
+import { RateLimit } from "./rate-limit";
 import { TargetPanel } from "./target-panel";
 
 type State =
@@ -113,6 +114,12 @@ export function GardenView({ gardenId, token }: { gardenId: string; token: strin
           <CopyButton value={token} label="Copy token" />
         </div>
       </details>
+
+      <RateLimit
+        garden={garden}
+        token={token}
+        onSaved={(updated) => setState({ phase: "ready", garden: updated, targets })}
+      />
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[17rem_1fr]">
         <aside aria-label="Targets">
