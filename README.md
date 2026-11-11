@@ -33,6 +33,10 @@ The control API only accepts browser calls from origins listed in its `CORS_ORIG
 - **Activity** shows every request that went through the proxy for the selected target, from any app: request count, share hit by a fault, average time, the split by outcome, outcomes per minute (hover or use the arrow keys on the chart; "Show as table" lists the same numbers), and the most recent requests. It refreshes every 15 seconds, and right after a Try it run. It needs the control API's `/requests` and `/stats` endpoints and the ingest service; if those are unavailable, the section says so and the rest of the page keeps working.
 - **Outcome colors** are validated as one palette for colorblind separation and contrast (see the comment in `src/app/globals.css`). Change them only by re-running a palette check.
 
+## Deploy on Vercel
+
+Import this repo in Vercel and set `NEXT_PUBLIC_CONTROL_API_URL` and `NEXT_PUBLIC_PROXY_URL` to the public URLs of the control API and the proxy. The full free setup (backend on Render, Postgres on Neon) is in [DEPLOY.md](https://github.com/georgi4334/Chaos-Garden/blob/main/DEPLOY.md) in the Chaos-Garden repo. On free hosting the APIs sleep when idle; the dashboard's error messages say when a server may be waking up.
+
 ## Docker and CI
 
 ```bash
