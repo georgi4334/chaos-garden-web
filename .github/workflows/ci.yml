@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -65,14 +65,14 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/chaos-garden-web
           tags: |
-            type=raw,value=main,enable={{is_default_branch}}
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha
       # The published image is for running everything locally (see Chaos-Garden infra/compose.stack.yml),
       # so the browser reaches the APIs on localhost. Build your own with other URLs for a real deployment.
       - uses: docker/build-push-action@v6
         with:
           context: .
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
