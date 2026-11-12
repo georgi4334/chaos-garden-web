@@ -11,6 +11,8 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-tested-6E9F18?logo=vitest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-e2e-2EAD33?logo=playwright&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-image-2496ED?logo=docker&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-Hobby-000000?logo=vercel&logoColor=white)
 
@@ -100,7 +102,7 @@ docker run -p 3001:3001 chaos-garden-web
 
 The API URLs are **build arguments**, because Next.js bakes `NEXT_PUBLIC_*` values into the browser bundle; they are the addresses the browser uses. The image uses Next.js standalone output (a small `server.js`), runs as `node` and has a health check.
 
-On every pull request and on `main`, CI runs lint and build, then builds the image. On `main` it pushes `ghcr.io/georgi4334/chaos-garden-web`, built for the local setup (APIs on localhost).
+On every pull request and on `main`, CI runs lint, the unit tests, the build and the browser tests, then builds the image. On `main` it pushes `ghcr.io/georgi4334/chaos-garden-web`, built for the local setup (APIs on localhost).
 
 ## Scripts and layout
 
@@ -109,6 +111,8 @@ npm run dev     # dev server on port 3001
 npm run build   # production build
 npm start       # serve the build on port 3001
 npm run lint
+npm test          # unit and component tests (Vitest, Testing Library)
+npm run test:e2e  # browser tests (Playwright): run `npm run build` first
 ```
 
 ```
@@ -131,9 +135,17 @@ src/
     └── outcomes.ts               outcome names and colors, rules as sentences
 ```
 
+## Tests
+
+- **Unit tests** cover the logic in `src/lib`: how a status and the `x-chaos-fault` header become an outcome, rules read as sentences, the API client's error messages (including "may be waking up"), per-minute stats turned into chart bins, and the admin tokens saved in `localStorage`.
+- **Component tests** render the rule form and Try it with a fake network, and check what is sent and what is shown, the way a user would: by role and label, not by CSS class.
+- **Browser tests** (`e2e/`) drive the real production build in Chromium, at desktop and phone sizes: create a garden, add a target and a rule, see the fault in Try it and Activity, switch a rule off, open a garden with its token, and the message when the API is down. The control API, proxy and ingest service are replaced by an in-memory fake (`e2e/fake-backend.ts`), so no backend is needed. Its proxy fires every matching rule, so results are deterministic.
+
+On a CI failure, the Playwright report (with a trace of each failed test) is attached to the run.
+
 ## Roadmap
 
-- Tests: component tests for the rule form and the outcome mapping, and a Playwright run of create garden → add rule → Try it against the real stack.
+- A browser test against the real stack (control API, Go proxy, ingest), in addition to the faked one.
 - A dark theme.
 - Live Activity over server-sent events instead of polling every 15 seconds.
 - Export a garden's rules as JSON and import them into another garden.
